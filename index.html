@@ -8,22 +8,41 @@
   </head>
   <body>
     <main>
-      <div class="game"></div>
+      <div class="game">
+        <div class="state-panel">
+          <img class="logo" src="images/logo.png" alt="Логотип" />
+          <div class="counters">
+            <div class="counter time-counter"></div>
+            <div class="counter stars-counter"></div>
+            <div class="counter fuel-counter"></div>
+          </div>
+          <div class="buttons">
+            <button class="sound-toggler" role="button"></button>
+            <button class="pause-toggler" role="button"></button>
+            <div class="fontsize-controls">
+              <button class="fontsize-up" role="button">Шрифт +</button>
+              <button class="fontsize-down" role="button">
+                Шрифт -
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
     <template id="plane">
-      <img class="object plane" src="images/airplane.png" />
+      <img class="object plane" src="images/airplane.png" alt="Самолет" />
     </template>
     <template id="cloud">
-      <img class="object cloud" src="images/cloud.png" />
+      <img class="object cloud" src="images/cloud.png" alt="Облако" />
     </template>
     <template id="bird">
-      <div class="object bird" />
+      <div class="object bird"></div>
     </template>
     <template id="star">
-      <img class="object star" src="images/star.png" />
+      <img class="object star" src="images/star.png" alt="Звезда" />
     </template>
     <template id="parachute">
-      <img class="object parachute" src="images/parachute.png" />
+      <img class="object parachute" src="images/parachute.png" alt="Парашют" />
     </template>
   </body>
 </html>
