@@ -1,0 +1,24 @@
+.game {
+  position: relative;
+}
+
+.object {
+  position: absolute;
+}
+
+.plane {
+  width: 100px;
+  height: 38px;
+}
+
+.cloud {
+  width: 77px;
+  height: 54px;
+}
+
+.bird {
+  width: 46px;
+  height: 50px;
+
+  background-image: url(../images/birds.png);
+}
