@@ -22,3 +22,13 @@
 
   background-image: url(../images/birds.png);
 }
+
+.star {
+  width: 40px;
+  height: 38px;
+}
+
+.parachute {
+  width: 50px;
+  height: 66px;
+}
