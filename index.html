@@ -12,13 +12,30 @@
         <div class="state-panel">
           <img class="logo" src="images/logo.png" alt="Логотип" />
           <div class="counters">
-            <div class="counter time-counter"></div>
-            <div class="counter stars-counter"></div>
-            <div class="counter fuel-counter"></div>
+            <div class="counter time-counter">
+              <p class="counter-hint time-counter-hint">Время:</p>
+              <p class="counter-value time-counter-value"></p>
+            </div>
+            <div class="counter stars-counter">
+              <p class="counter-hint stars-counter-hint">Звезды:</p>
+              <p class="counter-value stars-counter-value"></p>
+            </div>
+            <div class="counter fuel-counter">
+              <p class="counter-hint fuel-counter-hint">Топливо:</p>
+              <p class="counter-value fuel-counter-value"></p>
+            </div>
           </div>
           <div class="buttons">
-            <button class="sound-toggler" role="button"></button>
-            <button class="pause-toggler" role="button"></button>
+            <button class="toggler sound-toggler" role="button">
+              <span class="visually-hidden"
+                >Включить / выключить звуки игры</span
+              >
+            </button>
+            <button class="toggler pause-toggler" role="button">
+              <span class="visually-hidden"
+                >Поставить на паузу / возобновить</span
+              >
+            </button>
             <div class="fontsize-controls">
               <button class="fontsize-up" role="button">Шрифт +</button>
               <button class="fontsize-down" role="button">
@@ -27,6 +44,7 @@
             </div>
           </div>
         </div>
+        <div class="playground"></div>
       </div>
     </main>
     <template id="plane">
@@ -36,7 +54,7 @@
       <img class="object cloud" src="images/cloud.png" alt="Облако" />
     </template>
     <template id="bird">
-      <div class="object bird"></div>
+      <div class="object bird"><span class="visually-hidden">Птица</span></div>
     </template>
     <template id="star">
       <img class="object star" src="images/star.png" alt="Звезда" />
