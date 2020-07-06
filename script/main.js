@@ -16,6 +16,7 @@ class GameStateModel {
     this.previousTime = null;
     this.currentScore = 0;
     this.currentTime = null;
+    this.fontSize = 14;
   }
 }
 
@@ -50,10 +51,16 @@ class GameObject {
 
 // DOM-elements
 
-const gameWrapper = document.querySelector(".game");
+const body = document.body;
+const gameWrapper = body.querySelector(".game");
 const playgroundElement = gameWrapper.querySelector(".playground");
 const startModalElement = gameWrapper.querySelector(".start-modal");
 const startGameButton = startModalElement.querySelector(".start-game");
+const statePanelElement = gameWrapper.querySelector(".state-panel");
+const increaseFontSizeButton = statePanelElement.querySelector(".fontsize-up");
+const decreaseFontSizeButton = statePanelElement.querySelector(
+  ".fontsize-down"
+);
 
 // Mutable game objects
 
@@ -72,6 +79,25 @@ const handleStartGameButtonClick = () => {
   initGame();
 };
 
+const handleIncreaseFontSizeButtonClick = () => {
+  console.log("lol");
+  body.style.fontSize = `${++gameState.fontSize}px`;
+};
+
+const handleDecreaseFontSizeButtonClick = () => {
+  body.style.fontSize = `${--gameState.fontSize}px`;
+};
+
 // Main event listeners
 
 startGameButton.addEventListener("click", handleStartGameButtonClick);
+
+increaseFontSizeButton.addEventListener(
+  "click",
+  handleIncreaseFontSizeButtonClick
+);
+
+decreaseFontSizeButton.addEventListener(
+  "click",
+  handleDecreaseFontSizeButtonClick
+);
