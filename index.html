@@ -9,6 +9,40 @@
   <body>
     <main>
       <div class="game">
+        <div class="start-modal modal">
+          <button class="start-game button">
+            Начать игру
+          </button>
+          <p class="instructions">
+            Инструкции к игре:
+            <br />
+            <br />
+            1. Управляйте самолетом, используя клавиши AWSD или клавиши
+            стрелок.<br />
+            2. Уклоняйтесь от птиц, при столкновении с птицей игра
+            заканчивается.<br />
+            3. Следите за уровнем топлива. Когда топливо заканчивается - игра
+            окончена.<br />
+            4. Ловите парашюты, чтобы увеличить уровень топлива.<br />
+            5. Ловите звезды, чтобы увеличить количество очков.<br />
+            6. Одна единица топлива дает одну секунду игры.
+            <br />
+            <br />
+            Удачи!
+          </p>
+        </div>
+        <div class="results-modal modal hidden">
+          <p class="game-over-text">Игра окончена</p>
+          <p class="result-stars">
+            Количество звезд: <span class="result-stars-value"></span>
+          </p>
+          <p class="result-time">
+            Время: <span class="result-time-value"></span>
+          </p>
+          <button class="end-game button">
+            Начать заново!
+          </button>
+        </div>
         <div class="state-panel">
           <img class="logo" src="images/logo.png" alt="Логотип" />
           <div class="counters">
@@ -26,19 +60,19 @@
             </div>
           </div>
           <div class="buttons">
-            <button class="toggler sound-toggler" role="button">
-              <span class="visually-hidden"
-                >Включить / выключить звуки игры</span
-              >
-            </button>
             <button class="toggler pause-toggler" role="button">
               <span class="visually-hidden"
                 >Поставить на паузу / возобновить</span
               >
             </button>
+            <button class="toggler sound-toggler" role="button">
+              <span class="visually-hidden"
+                >Включить / выключить звуки игры</span
+              >
+            </button>
             <div class="fontsize-controls">
-              <button class="fontsize-up" role="button">Шрифт +</button>
-              <button class="fontsize-down" role="button">
+              <button class="fontsize-up button" role="button">Шрифт +</button>
+              <button class="fontsize-down button" role="button">
                 Шрифт -
               </button>
             </div>

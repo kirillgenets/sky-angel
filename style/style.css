@@ -25,6 +25,27 @@ body {
   overflow: hidden;
 }
 
+.hidden {
+  display: none;
+}
+
+.modal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+
+  border-radius: 20px;
+  padding: 15px;
+
+  transform: translate(-50%, -50%);
+
+  background-color: rgba(0, 0, 0, 0.8);
+
+  text-align: center;
+  color: #fff;
+}
+
 /* Game */
 
 .game {
@@ -98,7 +119,7 @@ body {
 
 .buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
 
   width: 100%;
 }
@@ -130,6 +151,30 @@ body {
 
 .pause-toggler {
   background-image: url(../images//pause.png);
+}
+
+.fontsize-controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.button {
+  padding: 5px;
+  border: 1px solid black;
+  border-radius: 5px;
+
+  background-color: #fff;
+
+  cursor: pointer;
+}
+
+.button:hover {
+  opacity: 0.8;
+}
+
+.button:active {
+  opacity: 0.6;
 }
 
 /* Objects */
