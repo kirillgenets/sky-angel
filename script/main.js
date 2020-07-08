@@ -1,5 +1,7 @@
 // Constants
 
+const INITIAL_TIMER_VALUE = "00:00";
+
 const Keys = {
   ARROW_UP: "ArrowUp",
   ARROW_DOWN: "ArrowDown",
@@ -23,6 +25,35 @@ const increaseFontSizeButton = statePanelElement.querySelector(".fontsize-up");
 const decreaseFontSizeButton = statePanelElement.querySelector(
   ".fontsize-down"
 );
+const timeCounterWrapper = statePanelElement.querySelector(".time-counter");
+
+// Initial values
+
+const initialGameState = {
+  isStarted: false,
+  previousScore: 0,
+  previousTime: null,
+  currentScore: 0,
+  currentTime: null,
+  fontSize: 14,
+};
+
+const initialPlaneData = {
+  position: {
+    x: 0,
+    y: 0,
+  },
+  speed: 3,
+  directions: {
+    top: false,
+    bottom: false,
+    left: false,
+    right: false,
+  },
+  template: document.querySelector("#plane"),
+  width: 100,
+  height: 38,
+};
 
 // Utilities
 
@@ -55,32 +86,39 @@ const isGameObjectInViewport = (gameObject) => {
 // Data models
 
 class GameStateModel {
-  constructor() {
-    this.isStarted = false;
-    this.previousScore = 0;
-    this.previousTime = null;
-    this.currentScore = 0;
-    this.currentTime = null;
-    this.fontSize = 14;
+  constructor({
+    isStarted,
+    previousScore,
+    previousTime,
+    currentScore,
+    currentTime,
+    fontSize,
+  }) {
+    this.isStarted = isStarted;
+    this.previousScore = previousScore;
+    this.previousTime = previousTime;
+    this.currentScore = currentScore;
+    this.currentTime = currentTime;
+    this.fontSize = fontSize;
   }
 }
 
 class PlaneDataModel {
-  constructor() {
-    this.position = {
-      x: 0,
-      y: 0,
-    };
-    this.speed = 2;
-    this.directions = {
-      top: false,
-      bottom: false,
-      left: false,
-      right: false,
-    };
-    this.template = document.querySelector("#plane");
-    this.width = 100;
-    this.height = 38;
+  constructor({ position, speed, directions, template, width, height }) {
+    this.position = position;
+    this.speed = speed;
+    this.directions = directions;
+    this.template = template;
+    this.width = width;
+    this.height = height;
+  }
+}
+
+class TimerDataModel {
+  constructor(startTime) {
+    this.startTime = startTime;
+    this.pauseTime = null;
+    this.overTime = null;
   }
 }
 
@@ -124,12 +162,66 @@ class PlaneView extends GameObjectView {
   }
 }
 
+class CounterView {
+  constructor({ value }) {
+    this._element = null;
+    this._value = value;
+  }
+
+  render() {
+    this._element = document.createElement("span");
+    this._element.className = "counter-value";
+    this._element.textContent = this._value;
+
+    return this._element;
+  }
+
+  destroy() {
+    this._element.remove();
+    this._element = null;
+  }
+
+  update(newValue) {
+    this._value = newValue;
+    this._element.textContent = this._value;
+  }
+}
+
 // Mutable game objects
 
-const planeData = new PlaneDataModel();
-const gameState = new GameStateModel();
+const gameState = new GameStateModel(initialGameState);
+const planeData = new PlaneDataModel(initialPlaneData);
+let timerData = {};
 
 // Game functions
+
+// Data creation
+
+const createTimerData = () => {
+  timerData = new TimerDataModel(Date.now());
+};
+
+// Rendering
+
+const renderTimer = () => {
+  const timerInstance = new CounterView({ value: INITIAL_TIMER_VALUE });
+  timeCounterWrapper.append(timerInstance.render());
+
+  const updateTimer = () => {
+    const timeFromStart = (Date.now() - timerData.startTime) / 1000;
+    const minutes = Math.round(timeFromStart / 60);
+    const seconds = Math.round(timeFromStart % 60);
+    const timerValue = `${minutes > 9 ? minutes : `0${minutes}`}:${
+      seconds > 9 ? seconds : `0${seconds}`
+    }`;
+
+    timerInstance.update(timerValue);
+
+    requestAnimationFrame(updateTimer);
+  };
+
+  requestAnimationFrame(updateTimer);
+};
 
 const renderPlane = () => {
   const changePlaneDirection = (directions) => {
@@ -230,7 +322,11 @@ const renderPlane = () => {
 
 const initGame = () => {
   gameState.isStarted = true;
+
+  createTimerData();
+
   renderPlane();
+  renderTimer();
 };
 
 // Main event handlers
@@ -241,7 +337,6 @@ const handleStartGameButtonClick = () => {
 };
 
 const handleIncreaseFontSizeButtonClick = () => {
-  console.log("lol");
   body.style.fontSize = `${++gameState.fontSize}px`;
 };
 
