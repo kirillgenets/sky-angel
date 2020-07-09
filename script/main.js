@@ -1,6 +1,8 @@
 // Constants
 
 const INITIAL_TIMER_VALUE = "00:00";
+const MAX_STARS_COUNT = 9;
+const STARS_GAP = 100;
 
 const Keys = {
   ARROW_UP: "ArrowUp",
@@ -55,6 +57,22 @@ const initialPlaneData = {
   height: 38,
 };
 
+const initialStarData = {
+  position: {
+    x: 0,
+    y: 0,
+  },
+  speed: 2,
+  template: document.querySelector("#star"),
+  width: 40,
+  height: 38,
+};
+
+// Useful variables
+
+const playgroundWidth = playgroundElement.clientWidth;
+const playgroundHeight = playgroundElement.clientHeight;
+
 // Utilities
 
 const createElementFromTemplate = (template) => {
@@ -77,11 +95,57 @@ const isGameObjectInViewport = (gameObject) => {
   } = gameObject;
   return (
     x > 0 &&
-    x + width < playgroundElement.clientWidth &&
+    x + width < playgroundWidth &&
     y > 0 &&
-    y + height < playgroundElement.clientHeight
+    y + height < playgroundHeight
   );
 };
+
+// Utility classes
+
+class ObjectPositionIterator {
+  constructor({
+    minMainAxisPosition,
+    maxMainAxisPosition,
+    minCrossAxisPosition,
+    mainAxisGap,
+    crossAxisGap,
+  }) {
+    this._min = minMainAxisPosition;
+    this._max = maxMainAxisPosition;
+    this._mainAxisGap = mainAxisGap;
+    this._crossAxisGap = crossAxisGap;
+    this._prevCrossAxisPosition = minCrossAxisPosition;
+    this._prevMainAxisPosition = minMainAxisPosition;
+  }
+
+  _hasNext(position) {
+    return this._max > position;
+  }
+
+  next() {
+    const possibleMinMainAxisPosition =
+      this._prevMainAxisPosition + this._mainAxisGap;
+    const hasNext = this._hasNext(possibleMinMainAxisPosition);
+    const currentMinMainAxisPosition = hasNext
+      ? possibleMinMainAxisPosition
+      : this._min;
+
+    const position = {
+      mainAxis:
+        Math.random() * (this._max - currentMinMainAxisPosition) +
+        currentMinMainAxisPosition,
+      crossAxis: this._hasNext(possibleMinMainAxisPosition)
+        ? this._prevCrossAxisPosition
+        : this._prevCrossAxisPosition + this._crossAxisGap,
+    };
+
+    this._prevMainAxisPosition = position.mainAxis;
+    this._prevCrossAxisPosition = position.crossAxis;
+
+    return position;
+  }
+}
 
 // Data models
 
@@ -122,6 +186,16 @@ class TimerDataModel {
   }
 }
 
+class FallingObjectDataModel {
+  constructor({ position, speed, template, width, height }) {
+    this.position = position;
+    this.speed = speed;
+    this.template = template;
+    this.width = width;
+    this.height = height;
+  }
+}
+
 // View classes
 
 class GameObjectView {
@@ -142,14 +216,6 @@ class GameObjectView {
   destroy() {
     this._element.remove();
     this._element = null;
-  }
-
-  move() {}
-}
-
-class PlaneView extends GameObjectView {
-  constructor(props) {
-    super(props);
   }
 
   move(position) {
@@ -192,6 +258,7 @@ class CounterView {
 const gameState = new GameStateModel(initialGameState);
 const planeData = new PlaneDataModel(initialPlaneData);
 let timerData = {};
+let starsData = [];
 
 // Game functions
 
@@ -199,6 +266,25 @@ let timerData = {};
 
 const createTimerData = () => {
   timerData = new TimerDataModel(Date.now());
+};
+
+const createStarsData = () => {
+  const positionIterator = new ObjectPositionIterator({
+    minMainAxisPosition: 0,
+    maxMainAxisPosition: playgroundWidth,
+    minCrossAxisPosition: 0,
+    mainAxisGap: STARS_GAP,
+    crossAxisGap: -STARS_GAP,
+  });
+
+  for (let i = 0; i < MAX_STARS_COUNT; i++) {
+    const { mainAxis: x, crossAxis: y } = positionIterator.next();
+
+    starsData.push({
+      ...initialStarData,
+      position: { x, y },
+    });
+  }
 };
 
 // Rendering
@@ -264,7 +350,7 @@ const renderPlane = () => {
     }
   };
 
-  const planeInstance = new PlaneView({
+  const planeInstance = new GameObjectView({
     template: planeData.template,
     position: planeData.position,
   });
@@ -276,22 +362,16 @@ const renderPlane = () => {
       planeData.position.x = 0;
     }
 
-    if (
-      planeData.position.x + planeData.width >
-      playgroundElement.clientWidth
-    ) {
-      planeData.position.x = playgroundElement.clientWidth - planeData.width;
+    if (planeData.position.x + planeData.width > playgroundWidth) {
+      planeData.position.x = playgroundWidth - planeData.width;
     }
 
     if (planeData.position.y < 0) {
       planeData.position.y = 0;
     }
 
-    if (
-      planeData.position.y + planeData.height >
-      playgroundElement.clientHeight
-    ) {
-      planeData.position.y = playgroundElement.clientHeight - planeData.height;
+    if (planeData.position.y + planeData.height > playgroundHeight) {
+      planeData.position.y = playgroundHeight - planeData.height;
     }
   };
 
@@ -324,6 +404,8 @@ const initGame = () => {
   gameState.isStarted = true;
 
   createTimerData();
+  createStarsData();
+  console.log(starsData);
 
   renderPlane();
   renderTimer();
