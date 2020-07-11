@@ -1,6 +1,6 @@
 // Constants
 
-const INITIAL_TIMER_VALUE = "00:00";
+const INITIAL_TIMER_VALUE = '00:00';
 const INITIAL_FUEL_COUNTER_VALUE = 10;
 const FUEL_INCREASE_STEP = 10;
 const FUEL_DECREASE_STEP = 1;
@@ -9,38 +9,40 @@ const MAX_STARS_COUNT = 5;
 const MAX_PARACHUTES_COUNT = 3;
 const STARS_GAP = 300;
 const PARACHUTES_GAP = 400;
+const ACTIVE_CLASSNAME = 'active';
 
 const Keys = {
-  ARROW_UP: "ArrowUp",
-  ARROW_DOWN: "ArrowDown",
-  ARROW_LEFT: "ArrowLeft",
-  ARROW_RIGHT: "ArrowRight",
-  KEY_W: "KeyW",
-  KEY_S: "KeyS",
-  KEY_A: "KeyA",
-  KEY_D: "KeyD",
+  ARROW_UP: 'ArrowUp',
+  ARROW_DOWN: 'ArrowDown',
+  ARROW_LEFT: 'ArrowLeft',
+  ARROW_RIGHT: 'ArrowRight',
+  KEY_W: 'KeyW',
+  KEY_S: 'KeyS',
+  KEY_A: 'KeyA',
+  KEY_D: 'KeyD',
+  SPACE: 'Space',
 };
 
 // DOM-elements
 
 const body = document.body;
-const gameWrapper = body.querySelector(".game");
-const playgroundElement = gameWrapper.querySelector(".playground");
-const startModalElement = gameWrapper.querySelector(".start-modal");
-const startGameButton = startModalElement.querySelector(".start-game");
-const statePanelElement = gameWrapper.querySelector(".state-panel");
-const increaseFontSizeButton = statePanelElement.querySelector(".fontsize-up");
-const decreaseFontSizeButton = statePanelElement.querySelector(
-  ".fontsize-down"
-);
-const timeCounterWrapper = statePanelElement.querySelector(".time-counter");
-const scoreCounterWrapper = statePanelElement.querySelector(".score-counter");
-const fuelCounterWrapper = statePanelElement.querySelector(".fuel-counter");
+const gameWrapper = body.querySelector('.game');
+const playgroundElement = gameWrapper.querySelector('.playground');
+const startModalElement = gameWrapper.querySelector('.start-modal');
+const startGameButton = startModalElement.querySelector('.start-game');
+const statePanelElement = gameWrapper.querySelector('.state-panel');
+const increaseFontSizeButton = statePanelElement.querySelector('.fontsize-up');
+const decreaseFontSizeButton = statePanelElement.querySelector('.fontsize-down');
+const timeCounterWrapper = statePanelElement.querySelector('.time-counter');
+const scoreCounterWrapper = statePanelElement.querySelector('.score-counter');
+const fuelCounterWrapper = statePanelElement.querySelector('.fuel-counter');
+const togglePauseButton = statePanelElement.querySelector('.pause-toggler');
 
 // Initial values
 
 const initialGameState = {
   isStarted: false,
+  isPaused: true,
   previousScore: 0,
   previousTime: null,
   currentScore: 0,
@@ -60,7 +62,7 @@ const initialPlaneData = {
     left: false,
     right: false,
   },
-  template: document.querySelector("#plane"),
+  template: document.querySelector('#plane'),
   width: 100,
   height: 38,
 };
@@ -71,7 +73,7 @@ const initialStarData = {
     y: 0,
   },
   speed: 2,
-  template: document.querySelector("#star"),
+  template: document.querySelector('#star'),
   width: 40,
   height: 38,
 };
@@ -82,7 +84,7 @@ const initialParachuteData = {
     y: 0,
   },
   speed: 2,
-  template: document.querySelector("#parachute"),
+  template: document.querySelector('#parachute'),
   width: 50,
   height: 66,
 };
@@ -95,15 +97,15 @@ const playgroundHeight = playgroundElement.clientHeight;
 // Utilities
 
 const createElementFromTemplate = (template) => {
-  return template.content.cloneNode(true).querySelector("*");
+  return template.content.cloneNode(true).querySelector('*');
 };
 
 const hideElement = (element) => {
-  element.classList.add("hidden");
+  element.classList.add('hidden');
 };
 
 const showElement = (element) => {
-  element.classList.remove("hidden");
+  element.classList.remove('hidden');
 };
 
 const areObjectsIntersected = (firstObjData, secondObjData) =>
@@ -115,13 +117,7 @@ const areObjectsIntersected = (firstObjData, secondObjData) =>
 // Utility classes
 
 class ObjectPositionIterator {
-  constructor({
-    minMainAxisPosition,
-    maxMainAxisPosition,
-    minCrossAxisPosition,
-    mainAxisGap,
-    crossAxisGap,
-  }) {
+  constructor({ minMainAxisPosition, maxMainAxisPosition, minCrossAxisPosition, mainAxisGap, crossAxisGap }) {
     this._min = minMainAxisPosition;
     this._max = maxMainAxisPosition;
     this._mainAxisGap = mainAxisGap;
@@ -135,17 +131,12 @@ class ObjectPositionIterator {
   }
 
   next() {
-    const possibleMinMainAxisPosition =
-      this._prevMainAxisPosition + this._mainAxisGap;
+    const possibleMinMainAxisPosition = this._prevMainAxisPosition + this._mainAxisGap;
     const hasNext = this._hasNext(possibleMinMainAxisPosition);
-    const currentMinMainAxisPosition = hasNext
-      ? possibleMinMainAxisPosition
-      : this._min;
+    const currentMinMainAxisPosition = hasNext ? possibleMinMainAxisPosition : this._min;
 
     const position = {
-      mainAxis:
-        Math.random() * (this._max - currentMinMainAxisPosition) +
-        currentMinMainAxisPosition,
+      mainAxis: Math.random() * (this._max - currentMinMainAxisPosition) + currentMinMainAxisPosition,
       crossAxis: this._hasNext(possibleMinMainAxisPosition)
         ? this._prevCrossAxisPosition
         : this._prevCrossAxisPosition + this._crossAxisGap,
@@ -161,20 +152,14 @@ class ObjectPositionIterator {
 // Data models
 
 class GameStateModel {
-  constructor({
-    isStarted,
-    previousScore,
-    previousTime,
-    currentScore,
-    currentTime,
-    fontSize,
-  }) {
+  constructor({ isStarted, previousScore, previousTime, currentScore, currentTime, fontSize }) {
     this.isStarted = isStarted;
     this.previousScore = previousScore;
     this.previousTime = previousTime;
     this.currentScore = currentScore;
     this.currentTime = currentTime;
     this.fontSize = fontSize;
+    this.isPaused = false;
   }
 }
 
@@ -262,8 +247,8 @@ class CounterView {
   }
 
   render() {
-    this._element = document.createElement("span");
-    this._element.className = "counter-value";
+    this._element = document.createElement('span');
+    this._element.className = 'counter-value';
     this._element.textContent = this._value;
 
     return this._element;
@@ -356,14 +341,14 @@ const renderTimer = () => {
   const updateTimer = () => {
     if (!gameState.isStarted) return;
 
-    const timeFromStart = (Date.now() - timerData.startTime) / 1000;
-    const minutes = Math.round(timeFromStart / 60);
-    const seconds = Math.round(timeFromStart % 60);
-    timerData.currentValue = `${minutes > 9 ? minutes : `0${minutes}`}:${
-      seconds > 9 ? seconds : `0${seconds}`
-    }`;
+    if (!gameState.isPaused) {
+      const timeFromStart = (Date.now() - timerData.startTime) / 1000;
+      const minutes = Math.round(timeFromStart / 60);
+      const seconds = Math.round(timeFromStart % 60);
+      timerData.currentValue = `${minutes > 9 ? minutes : `0${minutes}`}:${seconds > 9 ? seconds : `0${seconds}`}`;
 
-    timerInstance.update(timerData.currentValue);
+      timerInstance.update(timerData.currentValue);
+    }
 
     requestAnimationFrame(updateTimer);
   };
@@ -392,13 +377,14 @@ const renderFuelCounter = () => {
   const updateFuelCounter = () => {
     if (!gameState.isStarted) return;
 
-    const timeFromStart = (Date.now() - timerData.startTime) / 1000;
-    const seconds = Math.round(timeFromStart % 60);
-    fuelCounterData.value -=
-      fuelCounterData.previousDecrease === seconds ? 0 : FUEL_DECREASE_STEP;
-    fuelCounterData.previousDecrease = seconds;
+    if (!gameState.isPaused) {
+      const timeFromStart = (Date.now() - timerData.startTime) / 1000;
+      const seconds = Math.round(timeFromStart % 60);
+      fuelCounterData.value -= fuelCounterData.previousDecrease === seconds ? 0 : FUEL_DECREASE_STEP;
+      fuelCounterData.previousDecrease = seconds;
 
-    fuelCounterInstance.update(fuelCounterData.value);
+      fuelCounterInstance.update(fuelCounterData.value);
+    }
 
     requestAnimationFrame(updateFuelCounter);
   };
@@ -486,15 +472,17 @@ const renderPlane = () => {
   const movePlain = () => {
     if (!gameState.isStarted) return;
 
-    changePlanePosition();
+    if (!gameState.isPaused) {
+      changePlanePosition();
+    }
 
     requestAnimationFrame(movePlain);
   };
 
   requestAnimationFrame(movePlain);
 
-  document.addEventListener("keydown", handleKeyDown);
-  document.addEventListener("keyup", handleKeyUp);
+  document.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('keyup', handleKeyUp);
 };
 
 const renderStars = () => {
@@ -516,19 +504,21 @@ const renderStars = () => {
   const moveStar = (data, instance, index) => () => {
     if (!gameState.isStarted) return;
 
-    if (!isStarInViewport(data)) {
-      removeStar(instance, index);
-      return;
-    }
+    if (!gameState.isPaused) {
+      if (!isStarInViewport(data)) {
+        removeStar(instance, index);
+        return;
+      }
 
-    if (areObjectsIntersected(planeData, data)) {
-      removeStar(instance, index);
-      scoreCounterData.value++;
-      return;
-    }
+      if (areObjectsIntersected(planeData, data)) {
+        removeStar(instance, index);
+        scoreCounterData.value++;
+        return;
+      }
 
-    data.position.y += data.speed;
-    instance.move(data.position);
+      data.position.y += data.speed;
+      instance.move(data.position);
+    }
 
     requestAnimationFrame(moveStar(data, instance));
   };
@@ -565,19 +555,21 @@ const renderParachutes = () => {
   const moveParachute = (data, instance, index) => () => {
     if (!gameState.isStarted) return;
 
-    if (!isParachuteInViewport(data)) {
-      removeParachute(instance, index);
-      return;
-    }
+    if (!gameState.isPaused) {
+      if (!isParachuteInViewport(data)) {
+        removeParachute(instance, index);
+        return;
+      }
 
-    if (areObjectsIntersected(planeData, data)) {
-      removeParachute(instance, index);
-      fuelCounterData.value += FUEL_INCREASE_STEP;
-      return;
-    }
+      if (areObjectsIntersected(planeData, data)) {
+        removeParachute(instance, index);
+        fuelCounterData.value += FUEL_INCREASE_STEP;
+        return;
+      }
 
-    data.position.y += data.speed;
-    instance.move(data.position);
+      data.position.y += data.speed;
+      instance.move(data.position);
+    }
 
     requestAnimationFrame(moveParachute(data, instance));
   };
@@ -595,23 +587,15 @@ const renderParachutes = () => {
   parachutesData.forEach(renderParachute);
 };
 
-// Game functions
+const pauseGame = () => {
+  gameState.isPaused = !gameState.isPaused;
 
-const initGame = () => {
-  gameState.isStarted = true;
+  timerData.startTime = timerData.pauseTime
+    ? timerData.startTime + (Date.now() - timerData.pauseTime)
+    : timerData.startTime;
+  timerData.pauseTime = timerData.pauseTime ? null : Date.now();
 
-  createTimerData();
-  createScoreCounterData();
-  createFuelCounterData();
-  createStarsData();
-  createParachutesData();
-
-  renderPlane();
-  renderTimer();
-  renderScoreCounter();
-  renderFuelCounter();
-  renderStars();
-  renderParachutes();
+  togglePauseButton.classList.toggle(ACTIVE_CLASSNAME);
 };
 
 // Main event handlers
@@ -629,16 +613,41 @@ const handleDecreaseFontSizeButtonClick = () => {
   body.style.fontSize = `${--gameState.fontSize}px`;
 };
 
+const handlePauseKeyDown = (evt) => {
+  if (evt.code === Keys.SPACE) {
+    pauseGame();
+  }
+};
+
+const handleTogglePauseButtonClick = () => {
+  pauseGame();
+};
+
+// Game functions
+
+const initGame = () => {
+  gameState.isStarted = true;
+  document.addEventListener('keydown', handlePauseKeyDown);
+  togglePauseButton.addEventListener('click', handleTogglePauseButtonClick);
+
+  createTimerData();
+  createScoreCounterData();
+  createFuelCounterData();
+  createStarsData();
+  createParachutesData();
+
+  renderPlane();
+  renderTimer();
+  renderScoreCounter();
+  renderFuelCounter();
+  renderStars();
+  renderParachutes();
+};
+
 // Main event listeners
 
-startGameButton.addEventListener("click", handleStartGameButtonClick);
+startGameButton.addEventListener('click', handleStartGameButtonClick);
 
-increaseFontSizeButton.addEventListener(
-  "click",
-  handleIncreaseFontSizeButtonClick
-);
+increaseFontSizeButton.addEventListener('click', handleIncreaseFontSizeButtonClick);
 
-decreaseFontSizeButton.addEventListener(
-  "click",
-  handleDecreaseFontSizeButtonClick
-);
+decreaseFontSizeButton.addEventListener('click', handleDecreaseFontSizeButtonClick);
