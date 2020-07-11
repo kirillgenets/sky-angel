@@ -1,6 +1,7 @@
 // Constants
 
 const INITIAL_TIMER_VALUE = "00:00";
+const INITIAL_SCORE = 0;
 const MAX_STARS_COUNT = 5;
 const STARS_GAP = 300;
 
@@ -28,6 +29,7 @@ const decreaseFontSizeButton = statePanelElement.querySelector(
   ".fontsize-down"
 );
 const timeCounterWrapper = statePanelElement.querySelector(".time-counter");
+const scoreCounterWrapper = statePanelElement.querySelector(".score-counter");
 
 // Initial values
 
@@ -87,19 +89,11 @@ const showElement = (element) => {
   element.classList.remove("hidden");
 };
 
-const isGameObjectInViewport = (gameObject) => {
-  const {
-    position: { x, y },
-    width,
-    height,
-  } = gameObject;
-  return (
-    x > 0 &&
-    x + width < playgroundWidth &&
-    y > 0 &&
-    y + height < playgroundHeight
-  );
-};
+const areObjectsIntersected = (firstObjData, secondObjData) =>
+  firstObjData.position.x <= secondObjData.position.x + secondObjData.width &&
+  firstObjData.position.x + firstObjData.width >= secondObjData.position.x &&
+  firstObjData.position.y <= secondObjData.position.y + secondObjData.height &&
+  firstObjData.position.y + firstObjData.height >= secondObjData.position.y;
 
 // Utility classes
 
@@ -179,8 +173,9 @@ class PlaneDataModel {
 }
 
 class TimerDataModel {
-  constructor(startTime) {
+  constructor({ startTime, initialValue }) {
     this.startTime = startTime;
+    this.currentValue = initialValue;
     this.pauseTime = null;
     this.overTime = null;
   }
@@ -193,6 +188,12 @@ class FallingObjectDataModel {
     this.template = template;
     this.width = width;
     this.height = height;
+  }
+}
+
+class ScoreCounterDataModel {
+  constructor(initialValue) {
+    this.value = initialValue;
   }
 }
 
@@ -231,7 +232,7 @@ class GameObjectView {
 }
 
 class CounterView {
-  constructor({ value }) {
+  constructor(value) {
     this._element = null;
     this._value = value;
   }
@@ -261,13 +262,21 @@ const gameState = new GameStateModel(initialGameState);
 const planeData = new PlaneDataModel(initialPlaneData);
 let timerData = {};
 let starsData = [];
+let scoreCounterData = {};
 
 // Game functions
 
 // Data creation
 
 const createTimerData = () => {
-  timerData = new TimerDataModel(Date.now());
+  timerData = new TimerDataModel({
+    startTime: Date.now(),
+    initialValue: INITIAL_TIMER_VALUE,
+  });
+};
+
+const createScoreCounterData = () => {
+  scoreCounterData = new ScoreCounterDataModel(INITIAL_SCORE);
 };
 
 const createStarsData = () => {
@@ -292,23 +301,39 @@ const createStarsData = () => {
 // Rendering
 
 const renderTimer = () => {
-  const timerInstance = new CounterView({ value: INITIAL_TIMER_VALUE });
+  const timerInstance = new CounterView(timerData.currentValue);
   timeCounterWrapper.append(timerInstance.render());
 
   const updateTimer = () => {
+    if (!gameState.isStarted) return;
+
     const timeFromStart = (Date.now() - timerData.startTime) / 1000;
     const minutes = Math.round(timeFromStart / 60);
     const seconds = Math.round(timeFromStart % 60);
-    const timerValue = `${minutes > 9 ? minutes : `0${minutes}`}:${
+    timerData.currentValue = `${minutes > 9 ? minutes : `0${minutes}`}:${
       seconds > 9 ? seconds : `0${seconds}`
     }`;
 
-    timerInstance.update(timerValue);
+    timerInstance.update(timerData.currentValue);
 
     requestAnimationFrame(updateTimer);
   };
 
   requestAnimationFrame(updateTimer);
+};
+
+const renderScoreCounter = () => {
+  const scoreCounterInstance = new CounterView(scoreCounterData.value);
+  scoreCounterWrapper.append(scoreCounterInstance.render());
+
+  const updateScoreCounter = () => {
+    if (!gameState.isStarted) return;
+    scoreCounterInstance.update(scoreCounterData.value);
+
+    requestAnimationFrame(updateScoreCounter);
+  };
+
+  requestAnimationFrame(updateScoreCounter);
 };
 
 const renderPlane = () => {
@@ -412,14 +437,23 @@ const renderStars = () => {
     renderStars();
   };
 
+  const removeStar = (instance, index) => {
+    instance.destroy();
+    starsData.splice(index, 1);
+    regenerateStars();
+  };
+
   const moveStar = (data, instance, index) => () => {
     if (!gameState.isStarted) return;
 
     if (!isStarInViewport(data)) {
-      instance.destroy();
-      starsData.splice(index, 1);
-      regenerateStars();
+      removeStar(instance, index);
+      return;
+    }
 
+    if (areObjectsIntersected(planeData, data)) {
+      removeStar(instance, index);
+      scoreCounterData.value++;
       return;
     }
 
@@ -448,10 +482,12 @@ const initGame = () => {
   gameState.isStarted = true;
 
   createTimerData();
+  createScoreCounterData();
   createStarsData();
 
   renderPlane();
   renderTimer();
+  renderScoreCounter();
   renderStars();
 };
 
