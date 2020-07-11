@@ -1,8 +1,8 @@
 // Constants
 
 const INITIAL_TIMER_VALUE = "00:00";
-const MAX_STARS_COUNT = 9;
-const STARS_GAP = 100;
+const MAX_STARS_COUNT = 5;
+const STARS_GAP = 300;
 
 const Keys = {
   ARROW_UP: "ArrowUp",
@@ -214,6 +214,8 @@ class GameObjectView {
   }
 
   destroy() {
+    if (!this._element) return;
+
     this._element.remove();
     this._element = null;
   }
@@ -271,8 +273,8 @@ const createTimerData = () => {
 const createStarsData = () => {
   const positionIterator = new ObjectPositionIterator({
     minMainAxisPosition: 0,
-    maxMainAxisPosition: playgroundWidth,
-    minCrossAxisPosition: 0,
+    maxMainAxisPosition: playgroundWidth - initialStarData.width,
+    minCrossAxisPosition: 0 - initialStarData.height,
     mainAxisGap: STARS_GAP,
     crossAxisGap: -STARS_GAP,
   });
@@ -400,15 +402,57 @@ const renderPlane = () => {
   document.addEventListener("keyup", handleKeyUp);
 };
 
+const renderStars = () => {
+  const isStarInViewport = (data) => data.position.y < playgroundHeight;
+
+  const regenerateStars = () => {
+    if (starsData.length > 0) return;
+
+    createStarsData();
+    renderStars();
+  };
+
+  const moveStar = (data, instance, index) => () => {
+    if (!gameState.isStarted) return;
+
+    if (!isStarInViewport(data)) {
+      instance.destroy();
+      starsData.splice(index, 1);
+      regenerateStars();
+
+      return;
+    }
+
+    data.position.y += data.speed;
+    instance.move(data.position);
+
+    requestAnimationFrame(moveStar(data, instance));
+  };
+
+  const renderStar = (data, index) => {
+    const instance = new GameObjectView({
+      template: data.template,
+      position: data.position,
+    });
+    playgroundElement.append(instance.render());
+
+    requestAnimationFrame(moveStar(data, instance, index));
+  };
+
+  starsData.forEach(renderStar);
+};
+
+// Game functions
+
 const initGame = () => {
   gameState.isStarted = true;
 
   createTimerData();
   createStarsData();
-  console.log(starsData);
 
   renderPlane();
   renderTimer();
+  renderStars();
 };
 
 // Main event handlers

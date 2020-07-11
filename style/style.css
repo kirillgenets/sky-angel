@@ -62,9 +62,14 @@ body {
   height: 648px;
 
   background: #b7ffff;
+
+  overflow: hidden;
 }
 
 .state-panel {
+  position: relative;
+  z-index: 1;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -182,6 +187,8 @@ body {
 }
 
 .plane {
+  z-index: 1;
+
   width: 100px;
   height: 38px;
 }
