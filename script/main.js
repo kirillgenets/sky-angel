@@ -1,9 +1,14 @@
 // Constants
 
 const INITIAL_TIMER_VALUE = "00:00";
+const INITIAL_FUEL_COUNTER_VALUE = 10;
+const FUEL_INCREASE_STEP = 10;
+const FUEL_DECREASE_STEP = 1;
 const INITIAL_SCORE = 0;
 const MAX_STARS_COUNT = 5;
+const MAX_PARACHUTES_COUNT = 3;
 const STARS_GAP = 300;
+const PARACHUTES_GAP = 400;
 
 const Keys = {
   ARROW_UP: "ArrowUp",
@@ -30,6 +35,7 @@ const decreaseFontSizeButton = statePanelElement.querySelector(
 );
 const timeCounterWrapper = statePanelElement.querySelector(".time-counter");
 const scoreCounterWrapper = statePanelElement.querySelector(".score-counter");
+const fuelCounterWrapper = statePanelElement.querySelector(".fuel-counter");
 
 // Initial values
 
@@ -68,6 +74,17 @@ const initialStarData = {
   template: document.querySelector("#star"),
   width: 40,
   height: 38,
+};
+
+const initialParachuteData = {
+  position: {
+    x: 0,
+    y: 0,
+  },
+  speed: 2,
+  template: document.querySelector("#parachute"),
+  width: 50,
+  height: 66,
 };
 
 // Useful variables
@@ -181,6 +198,19 @@ class TimerDataModel {
   }
 }
 
+class ScoreCounterDataModel {
+  constructor(initialValue) {
+    this.value = initialValue;
+  }
+}
+
+class FuelCounterDataModel {
+  constructor(initialValue) {
+    this.value = initialValue;
+    this.previousDecrease = 0;
+  }
+}
+
 class FallingObjectDataModel {
   constructor({ position, speed, template, width, height }) {
     this.position = position;
@@ -188,12 +218,6 @@ class FallingObjectDataModel {
     this.template = template;
     this.width = width;
     this.height = height;
-  }
-}
-
-class ScoreCounterDataModel {
-  constructor(initialValue) {
-    this.value = initialValue;
   }
 }
 
@@ -263,6 +287,8 @@ const planeData = new PlaneDataModel(initialPlaneData);
 let timerData = {};
 let starsData = [];
 let scoreCounterData = {};
+let parachutesData = [];
+let fuelCounterData = {};
 
 // Game functions
 
@@ -279,6 +305,10 @@ const createScoreCounterData = () => {
   scoreCounterData = new ScoreCounterDataModel(INITIAL_SCORE);
 };
 
+const createFuelCounterData = () => {
+  fuelCounterData = new FuelCounterDataModel(INITIAL_FUEL_COUNTER_VALUE);
+};
+
 const createStarsData = () => {
   const positionIterator = new ObjectPositionIterator({
     minMainAxisPosition: 0,
@@ -293,6 +323,25 @@ const createStarsData = () => {
 
     starsData.push({
       ...initialStarData,
+      position: { x, y },
+    });
+  }
+};
+
+const createParachutesData = () => {
+  const positionIterator = new ObjectPositionIterator({
+    minMainAxisPosition: 0,
+    maxMainAxisPosition: playgroundWidth - initialParachuteData.width,
+    minCrossAxisPosition: 0 - initialParachuteData.height,
+    mainAxisGap: PARACHUTES_GAP,
+    crossAxisGap: -PARACHUTES_GAP,
+  });
+
+  for (let i = 0; i < MAX_PARACHUTES_COUNT; i++) {
+    const { mainAxis: x, crossAxis: y } = positionIterator.next();
+
+    parachutesData.push({
+      ...initialParachuteData,
       position: { x, y },
     });
   }
@@ -334,6 +383,27 @@ const renderScoreCounter = () => {
   };
 
   requestAnimationFrame(updateScoreCounter);
+};
+
+const renderFuelCounter = () => {
+  const fuelCounterInstance = new CounterView(fuelCounterData.value);
+  fuelCounterWrapper.append(fuelCounterInstance.render());
+
+  const updateFuelCounter = () => {
+    if (!gameState.isStarted) return;
+
+    const timeFromStart = (Date.now() - timerData.startTime) / 1000;
+    const seconds = Math.round(timeFromStart % 60);
+    fuelCounterData.value -=
+      fuelCounterData.previousDecrease === seconds ? 0 : FUEL_DECREASE_STEP;
+    fuelCounterData.previousDecrease = seconds;
+
+    fuelCounterInstance.update(fuelCounterData.value);
+
+    requestAnimationFrame(updateFuelCounter);
+  };
+
+  requestAnimationFrame(updateFuelCounter);
 };
 
 const renderPlane = () => {
@@ -476,6 +546,55 @@ const renderStars = () => {
   starsData.forEach(renderStar);
 };
 
+const renderParachutes = () => {
+  const isParachuteInViewport = (data) => data.position.y < playgroundHeight;
+
+  const regenerateParachutes = () => {
+    if (parachutesData.length > 0) return;
+
+    createParachutesData();
+    renderParachutes();
+  };
+
+  const removeParachute = (instance, index) => {
+    instance.destroy();
+    parachutesData.splice(index, 1);
+    regenerateParachutes();
+  };
+
+  const moveParachute = (data, instance, index) => () => {
+    if (!gameState.isStarted) return;
+
+    if (!isParachuteInViewport(data)) {
+      removeParachute(instance, index);
+      return;
+    }
+
+    if (areObjectsIntersected(planeData, data)) {
+      removeParachute(instance, index);
+      fuelCounterData.value += FUEL_INCREASE_STEP;
+      return;
+    }
+
+    data.position.y += data.speed;
+    instance.move(data.position);
+
+    requestAnimationFrame(moveParachute(data, instance));
+  };
+
+  const renderParachute = (data, index) => {
+    const instance = new GameObjectView({
+      template: data.template,
+      position: data.position,
+    });
+    playgroundElement.append(instance.render());
+
+    requestAnimationFrame(moveParachute(data, instance, index));
+  };
+
+  parachutesData.forEach(renderParachute);
+};
+
 // Game functions
 
 const initGame = () => {
@@ -483,12 +602,16 @@ const initGame = () => {
 
   createTimerData();
   createScoreCounterData();
+  createFuelCounterData();
   createStarsData();
+  createParachutesData();
 
   renderPlane();
   renderTimer();
   renderScoreCounter();
+  renderFuelCounter();
   renderStars();
+  renderParachutes();
 };
 
 // Main event handlers
