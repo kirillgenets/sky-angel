@@ -1021,14 +1021,7 @@ const renderClouds = () => {
 
 // Game functions
 
-const initGame = () => {
-  gameState.isStarted = true;
-  document.addEventListener("keydown", handlePauseKeyDown);
-  togglePauseButton.addEventListener("click", handleTogglePauseButtonClick);
-
-  backgroundAudio.loop = true;
-  backgroundAudio.play();
-
+const createAllData = () => {
   createPlaneData();
   createTimerData();
   createScoreCounterData();
@@ -1037,7 +1030,9 @@ const initGame = () => {
   createParachutesData();
   createBirdsData();
   createCloudsData();
+};
 
+const renderAllObjects = () => {
   renderPlane();
   renderTimer();
   renderScoreCounter();
@@ -1046,6 +1041,18 @@ const initGame = () => {
   renderParachutes();
   renderBirds();
   renderClouds();
+};
+
+const initGame = () => {
+  gameState.isStarted = true;
+  document.addEventListener("keydown", handlePauseKeyDown);
+  togglePauseButton.addEventListener("click", handleTogglePauseButtonClick);
+
+  backgroundAudio.loop = true;
+  backgroundAudio.play();
+
+  createAllData();
+  renderAllObjects();
 };
 
 // Main event listeners
