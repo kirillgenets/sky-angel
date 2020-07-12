@@ -17,9 +17,12 @@
             Инструкции к игре:
             <br />
             <br />
-            1. Управляйте самолетом, используя клавиши AWSD или клавиши стрелок.<br />
-            2. Уклоняйтесь от птиц, при столкновении с птицей игра заканчивается.<br />
-            3. Следите за уровнем топлива. Когда топливо заканчивается - игра окончена.<br />
+            1. Управляйте самолетом, используя клавиши AWSD или клавиши
+            стрелок.<br />
+            2. Уклоняйтесь от птиц, при столкновении с птицей игра
+            заканчивается.<br />
+            3. Следите за уровнем топлива. Когда топливо заканчивается - игра
+            окончена.<br />
             4. Ловите парашюты, чтобы увеличить уровень топлива.<br />
             5. Ловите звезды, чтобы увеличить количество очков.<br />
             6. Одна единица топлива дает одну секунду игры.
@@ -30,9 +33,17 @@
         </div>
         <div class="results-modal modal hidden">
           <p class="game-over-text">Игра окончена</p>
-          <p class="result-stars">Количество звезд: <span class="result-stars-value"></span></p>
-          <p class="result-time">Время: <span class="result-time-value"></span></p>
-          <button class="end-game button">
+          <p class="prev-result-stars hidden">
+            Предыдущее количество звезд: <span class="result-value"></span>
+          </p>
+          <p class="prev-result-time hidden">
+            Предыдущее время: <span class="result-value"></span>
+          </p>
+          <p class="result-stars">
+            Количество звезд: <span class="result-value"></span>
+          </p>
+          <p class="result-time">Время: <span class="result-value"></span></p>
+          <button class="play-again button">
             Начать заново!
           </button>
         </div>
@@ -51,10 +62,14 @@
           </div>
           <div class="buttons">
             <button class="toggler pause-toggler" role="button">
-              <span class="visually-hidden">Поставить на паузу / возобновить</span>
+              <span class="visually-hidden"
+                >Поставить на паузу / возобновить</span
+              >
             </button>
             <button class="toggler sound-toggler" role="button">
-              <span class="visually-hidden">Включить / выключить звуки игры</span>
+              <span class="visually-hidden"
+                >Включить / выключить звуки игры</span
+              >
             </button>
             <div class="fontsize-controls">
               <button class="fontsize-up button" role="button">Шрифт +</button>

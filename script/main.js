@@ -1,6 +1,6 @@
 // Constants
 
-const INITIAL_TIMER_VALUE = '00:00';
+const INITIAL_TIMER_VALUE = "00:00";
 const INITIAL_FUEL_COUNTER_VALUE = 10;
 const FUEL_INCREASE_STEP = 10;
 const FUEL_DECREASE_STEP = 1;
@@ -11,44 +11,63 @@ const MAX_BIRDS_COUNT = 8;
 const STARS_GAP = 300;
 const PARACHUTES_GAP = 400;
 const BIRDS_GAP = 300;
-const ACTIVE_CLASSNAME = 'active';
+const ACTIVE_CLASSNAME = "active";
 const MIN_VOLUME_LEVEL = 0;
 const MAX_VOLUME_LEVEL = 1;
 
 const Key = {
-  ARROW_UP: 'ArrowUp',
-  ARROW_DOWN: 'ArrowDown',
-  ARROW_LEFT: 'ArrowLeft',
-  ARROW_RIGHT: 'ArrowRight',
-  KEY_W: 'KeyW',
-  KEY_S: 'KeyS',
-  KEY_A: 'KeyA',
-  KEY_D: 'KeyD',
-  SPACE: 'Space',
+  ARROW_UP: "ArrowUp",
+  ARROW_DOWN: "ArrowDown",
+  ARROW_LEFT: "ArrowLeft",
+  ARROW_RIGHT: "ArrowRight",
+  KEY_W: "KeyW",
+  KEY_S: "KeyS",
+  KEY_A: "KeyA",
+  KEY_D: "KeyD",
+  SPACE: "Space",
 };
 
 const SoundPath = {
-  BACKGROUND: './sound/background.mp3',
-  FINISH: './sound/finish.mp3',
-  HIT: './sound/hit.mp3',
-  STAR: './sound/star.mp3',
+  BACKGROUND: "./sound/background.mp3",
+  FINISH: "./sound/finish.mp3",
+  HIT: "./sound/hit.mp3",
+  STAR: "./sound/star.mp3",
 };
 
 // DOM-elements
 
 const body = document.body;
-const gameWrapper = body.querySelector('.game');
-const playgroundElement = gameWrapper.querySelector('.playground');
-const startModalElement = gameWrapper.querySelector('.start-modal');
-const startGameButton = startModalElement.querySelector('.start-game');
-const statePanelElement = gameWrapper.querySelector('.state-panel');
-const increaseFontSizeButton = statePanelElement.querySelector('.fontsize-up');
-const decreaseFontSizeButton = statePanelElement.querySelector('.fontsize-down');
-const timeCounterWrapper = statePanelElement.querySelector('.time-counter');
-const scoreCounterWrapper = statePanelElement.querySelector('.score-counter');
-const fuelCounterWrapper = statePanelElement.querySelector('.fuel-counter');
-const togglePauseButton = statePanelElement.querySelector('.pause-toggler');
-const toggleSoundButton = statePanelElement.querySelector('.sound-toggler');
+const gameWrapper = body.querySelector(".game");
+const playgroundElement = gameWrapper.querySelector(".playground");
+
+const startModalElement = gameWrapper.querySelector(".start-modal");
+const startGameButton = startModalElement.querySelector(".start-game");
+
+const statePanelElement = gameWrapper.querySelector(".state-panel");
+const increaseFontSizeButton = statePanelElement.querySelector(".fontsize-up");
+const decreaseFontSizeButton = statePanelElement.querySelector(
+  ".fontsize-down"
+);
+const timeCounterWrapper = statePanelElement.querySelector(".time-counter");
+const scoreCounterWrapper = statePanelElement.querySelector(".score-counter");
+const fuelCounterWrapper = statePanelElement.querySelector(".fuel-counter");
+const togglePauseButton = statePanelElement.querySelector(".pause-toggler");
+const toggleSoundButton = statePanelElement.querySelector(".sound-toggler");
+
+const resultsModalElement = gameWrapper.querySelector(".results-modal");
+const playAgainButton = resultsModalElement.querySelector(".play-again");
+const starsResultElement = resultsModalElement.querySelector(
+  ".result-stars .result-value"
+);
+const timeResultElement = resultsModalElement.querySelector(
+  ".result-time .result-value"
+);
+const prevStarsResultElement = resultsModalElement.querySelector(
+  ".prev-result-stars .result-value"
+);
+const prevTimeResultElement = resultsModalElement.querySelector(
+  ".prev-result-time .result-value"
+);
 
 // Sounds
 
@@ -61,7 +80,8 @@ const starAudio = new Audio(SoundPath.STAR);
 
 const initialGameState = {
   isStarted: false,
-  isPaused: true,
+  isPaused: false,
+  isOver: false,
   previousScore: 0,
   previousTime: null,
   currentScore: 0,
@@ -81,7 +101,7 @@ const initialPlaneData = {
     left: false,
     right: false,
   },
-  template: document.querySelector('#plane'),
+  template: document.querySelector("#plane"),
   width: 100,
   height: 38,
 };
@@ -92,7 +112,7 @@ const initialStarData = {
     y: 0,
   },
   speed: 2,
-  template: document.querySelector('#star'),
+  template: document.querySelector("#star"),
   width: 40,
   height: 38,
 };
@@ -103,7 +123,7 @@ const initialParachuteData = {
     y: 0,
   },
   speed: 2,
-  template: document.querySelector('#parachute'),
+  template: document.querySelector("#parachute"),
   width: 50,
   height: 66,
 };
@@ -114,7 +134,7 @@ const initialBirdData = {
     y: 0,
   },
   speed: 1,
-  template: document.querySelector('#bird'),
+  template: document.querySelector("#bird"),
   width: 46,
   height: 50,
   xBackgroundPosition: 0,
@@ -127,14 +147,15 @@ const playgroundHeight = playgroundElement.clientHeight;
 
 // Utilities
 
-const createElementFromTemplate = (template) => template.content.cloneNode(true).querySelector('*');
+const createElementFromTemplate = (template) =>
+  template.content.cloneNode(true).querySelector("*");
 
 const hideElement = (element) => {
-  element.classList.add('hidden');
+  element.classList.add("hidden");
 };
 
 const showElement = (element) => {
-  element.classList.remove('hidden');
+  element.classList.remove("hidden");
 };
 
 const areObjectsIntersected = (firstObjData, secondObjData) =>
@@ -151,7 +172,13 @@ const playSound = (sound) => {
 // Utility classes
 
 class ObjectPositionIterator {
-  constructor({ minMainAxisPosition, maxMainAxisPosition, minCrossAxisPosition, mainAxisGap, crossAxisGap }) {
+  constructor({
+    minMainAxisPosition,
+    maxMainAxisPosition,
+    minCrossAxisPosition,
+    mainAxisGap,
+    crossAxisGap,
+  }) {
     this._min = minMainAxisPosition;
     this._max = maxMainAxisPosition;
     this._mainAxisGap = mainAxisGap;
@@ -165,12 +192,17 @@ class ObjectPositionIterator {
   }
 
   next() {
-    const possibleMinMainAxisPosition = this._prevMainAxisPosition + this._mainAxisGap;
+    const possibleMinMainAxisPosition =
+      this._prevMainAxisPosition + this._mainAxisGap;
     const hasNext = this._hasNext(possibleMinMainAxisPosition);
-    const currentMinMainAxisPosition = hasNext ? possibleMinMainAxisPosition : this._min;
+    const currentMinMainAxisPosition = hasNext
+      ? possibleMinMainAxisPosition
+      : this._min;
 
     const position = {
-      mainAxis: Math.random() * (this._max - currentMinMainAxisPosition) + currentMinMainAxisPosition,
+      mainAxis:
+        Math.random() * (this._max - currentMinMainAxisPosition) +
+        currentMinMainAxisPosition,
       crossAxis: this._hasNext(possibleMinMainAxisPosition)
         ? this._prevCrossAxisPosition
         : this._prevCrossAxisPosition + this._crossAxisGap,
@@ -186,14 +218,24 @@ class ObjectPositionIterator {
 // Data models
 
 class GameStateModel {
-  constructor({ isStarted, previousScore, previousTime, currentScore, currentTime, fontSize }) {
+  constructor({
+    isStarted,
+    isPaused,
+    isOver,
+    previousScore,
+    previousTime,
+    currentScore,
+    currentTime,
+    fontSize,
+  }) {
     this.isStarted = isStarted;
+    this.isPaused = isPaused;
+    this.isOver = isOver;
     this.previousScore = previousScore;
     this.previousTime = previousTime;
     this.currentScore = currentScore;
     this.currentTime = currentTime;
     this.fontSize = fontSize;
-    this.isPaused = false;
   }
 }
 
@@ -241,7 +283,14 @@ class FallingObjectDataModel {
 }
 
 class SpriteObjectDataModel {
-  constructor({ position, speed, template, width, height, xBackgroundPosition }) {
+  constructor({
+    position,
+    speed,
+    template,
+    width,
+    height,
+    xBackgroundPosition,
+  }) {
     this.position = position;
     this.speed = speed;
     this.template = template;
@@ -315,8 +364,8 @@ class CounterView {
   }
 
   render() {
-    this._element = document.createElement('span');
-    this._element.className = 'counter-value';
+    this._element = document.createElement("span");
+    this._element.className = "counter-value";
     this._element.textContent = this._value;
 
     return this._element;
@@ -336,8 +385,8 @@ class CounterView {
 // Mutable game objects
 
 const gameState = new GameStateModel(initialGameState);
-const planeData = new PlaneDataModel(initialPlaneData);
 
+let planeData = {};
 let timerData = {};
 let starsData = [];
 let scoreCounterData = {};
@@ -345,9 +394,103 @@ let parachutesData = [];
 let fuelCounterData = {};
 let birdsData = [];
 
+// Main event handlers
+
+const handleStartGameButtonClick = () => {
+  hideElement(startModalElement);
+  initGame();
+};
+
+const handleIncreaseFontSizeButtonClick = () => {
+  body.style.fontSize = `${++gameState.fontSize}px`;
+};
+
+const handleDecreaseFontSizeButtonClick = () => {
+  body.style.fontSize = `${--gameState.fontSize}px`;
+};
+
+const handlePauseKeyDown = (evt) => {
+  if (evt.code === Key.SPACE) {
+    pauseGame();
+  }
+};
+
+const handleTogglePauseButtonClick = () => {
+  pauseGame();
+};
+
+const handlePlayAgainButtonClick = () => {
+  gameState.isOver = false;
+  gameState.previousScore = gameState.currentScore;
+  gameState.previousTime = gameState.currentTime;
+  gameState.currentScore = 0;
+  gameState.currentTime = INITIAL_TIMER_VALUE;
+
+  hideElement(resultsModalElement);
+
+  initGame();
+};
+
 // Game functions
 
+const pauseGame = () => {
+  gameState.isPaused = !gameState.isPaused;
+
+  if (backgroundAudio.paused) {
+    backgroundAudio.play();
+  } else {
+    backgroundAudio.pause();
+  }
+
+  timerData.startTime = timerData.pauseTime
+    ? timerData.startTime + (Date.now() - timerData.pauseTime)
+    : timerData.startTime;
+  timerData.pauseTime = timerData.pauseTime ? null : Date.now();
+
+  togglePauseButton.classList.toggle(ACTIVE_CLASSNAME);
+};
+
+// Game over functions
+
+const saveResults = () => {
+  gameState.currentScore = scoreCounterData.value;
+  gameState.currentTime = timerData.currentValue;
+};
+
+const showResults = () => {
+  showElement(resultsModalElement);
+
+  if (gameState.previousTime) {
+    prevStarsResultElement.textContent = gameState.previousScore;
+    prevTimeResultElement.textContent = gameState.previousTime;
+
+    showElement(prevStarsResultElement.parentNode);
+    showElement(prevTimeResultElement.parentNode);
+  }
+
+  starsResultElement.textContent = gameState.currentScore;
+  timeResultElement.textContent = gameState.currentTime;
+};
+
+const overGame = () => {
+  backgroundAudio.pause();
+  backgroundAudio.currentTime = 0;
+
+  saveResults();
+  showResults();
+
+  gameState.isStarted = false;
+  gameState.isOver = true;
+};
+
 // Data creation
+
+const createPlaneData = () => {
+  planeData = new PlaneDataModel({
+    ...initialPlaneData,
+    position: { ...initialPlaneData.position },
+  });
+};
 
 const createTimerData = () => {
   timerData = new TimerDataModel({
@@ -428,13 +571,21 @@ const renderTimer = () => {
   timeCounterWrapper.append(timerInstance.render());
 
   const updateTimer = () => {
+    if (gameState.isOver) {
+      timerInstance.destroy();
+      timerData = {};
+      return;
+    }
+
     if (!gameState.isStarted) return;
 
     if (!gameState.isPaused) {
       const timeFromStart = (Date.now() - timerData.startTime) / 1000;
       const minutes = Math.round(timeFromStart / 60);
       const seconds = Math.round(timeFromStart % 60);
-      timerData.currentValue = `${minutes > 9 ? minutes : `0${minutes}`}:${seconds > 9 ? seconds : `0${seconds}`}`;
+      timerData.currentValue = `${minutes > 9 ? minutes : `0${minutes}`}:${
+        seconds > 9 ? seconds : `0${seconds}`
+      }`;
 
       timerInstance.update(timerData.currentValue);
     }
@@ -450,7 +601,14 @@ const renderScoreCounter = () => {
   scoreCounterWrapper.append(scoreCounterInstance.render());
 
   const updateScoreCounter = () => {
+    if (gameState.isOver) {
+      scoreCounterInstance.destroy();
+      scoreCounterData = {};
+      return;
+    }
+
     if (!gameState.isStarted) return;
+
     scoreCounterInstance.update(scoreCounterData.value);
 
     requestAnimationFrame(updateScoreCounter);
@@ -464,15 +622,27 @@ const renderFuelCounter = () => {
   fuelCounterWrapper.append(fuelCounterInstance.render());
 
   const updateFuelCounter = () => {
+    if (gameState.isOver) {
+      fuelCounterInstance.destroy();
+      fuelCounterData = {};
+      return;
+    }
+
     if (!gameState.isStarted) return;
 
     if (!gameState.isPaused) {
       const timeFromStart = (Date.now() - timerData.startTime) / 1000;
       const seconds = Math.round(timeFromStart % 60);
-      fuelCounterData.value -= fuelCounterData.previousDecrease === seconds ? 0 : FUEL_DECREASE_STEP;
+      fuelCounterData.value -=
+        fuelCounterData.previousDecrease === seconds ? 0 : FUEL_DECREASE_STEP;
       fuelCounterData.previousDecrease = seconds;
 
       fuelCounterInstance.update(fuelCounterData.value);
+
+      if (fuelCounterData.value === 0) {
+        overGame();
+        finishAudio.play();
+      }
     }
 
     requestAnimationFrame(updateFuelCounter);
@@ -559,6 +729,12 @@ const renderPlane = () => {
   };
 
   const movePlain = () => {
+    if (gameState.isOver) {
+      planeInstance.destroy();
+      planeData = {};
+      return;
+    }
+
     if (!gameState.isStarted) return;
 
     if (!gameState.isPaused) {
@@ -570,8 +746,8 @@ const renderPlane = () => {
 
   requestAnimationFrame(movePlain);
 
-  document.addEventListener('keydown', handleKeyDown);
-  document.addEventListener('keyup', handleKeyUp);
+  document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("keyup", handleKeyUp);
 };
 
 const renderStars = () => {
@@ -591,6 +767,11 @@ const renderStars = () => {
   };
 
   const moveStar = (data, instance, index) => () => {
+    if (gameState.isOver) {
+      removeStar(instance, index);
+      return;
+    }
+
     if (!gameState.isStarted) return;
 
     if (!gameState.isPaused) {
@@ -643,6 +824,11 @@ const renderParachutes = () => {
   };
 
   const moveParachute = (data, instance, index) => () => {
+    if (gameState.isOver) {
+      removeParachute(instance, index);
+      return;
+    }
+
     if (!gameState.isStarted) return;
 
     if (!gameState.isPaused) {
@@ -679,7 +865,7 @@ const renderParachutes = () => {
 };
 
 const renderBirds = () => {
-  const isBirdInViewport = (data) => data.position.x > 0;
+  const isBirdInViewport = (data) => data.position.x + data.width > 0;
 
   const regenerateBirds = () => {
     if (birdsData.length > 0) return;
@@ -695,6 +881,11 @@ const renderBirds = () => {
   };
 
   const moveBird = (data, instance, index) => () => {
+    if (gameState.isOver) {
+      removeBird(instance, index);
+      return;
+    }
+
     if (!gameState.isStarted) return;
 
     if (!gameState.isPaused) {
@@ -706,6 +897,7 @@ const renderBirds = () => {
       if (areObjectsIntersected(planeData, data)) {
         playSound(hitAudio);
         removeBird(instance, index);
+        overGame();
         return;
       }
 
@@ -731,69 +923,34 @@ const renderBirds = () => {
   birdsData.forEach(renderBird);
 };
 
-// Pause
-
-const pauseGame = () => {
-  gameState.isPaused = !gameState.isPaused;
-
-  if (backgroundAudio.paused) {
-    backgroundAudio.play();
-  } else {
-    backgroundAudio.pause();
-  }
-
-  timerData.startTime = timerData.pauseTime
-    ? timerData.startTime + (Date.now() - timerData.pauseTime)
-    : timerData.startTime;
-  timerData.pauseTime = timerData.pauseTime ? null : Date.now();
-
-  togglePauseButton.classList.toggle(ACTIVE_CLASSNAME);
-};
-
-// Main event handlers
-
-const handleStartGameButtonClick = () => {
-  hideElement(startModalElement);
-  initGame();
-};
-
-const handleIncreaseFontSizeButtonClick = () => {
-  body.style.fontSize = `${++gameState.fontSize}px`;
-};
-
-const handleDecreaseFontSizeButtonClick = () => {
-  body.style.fontSize = `${--gameState.fontSize}px`;
-};
-
-const handlePauseKeyDown = (evt) => {
-  if (evt.code === Key.SPACE) {
-    pauseGame();
-  }
-};
-
-const handleTogglePauseButtonClick = () => {
-  pauseGame();
-};
-
 const handleToggleSoundButtonClick = () => {
   toggleSoundButton.classList.toggle(ACTIVE_CLASSNAME);
 
-  backgroundAudio.volume = backgroundAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
-  finishAudio.volume = finishAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
-  hitAudio.volume = hitAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
-  starAudio.volume = starAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
+  backgroundAudio.volume =
+    backgroundAudio.volume === MIN_VOLUME_LEVEL
+      ? MAX_VOLUME_LEVEL
+      : MIN_VOLUME_LEVEL;
+  finishAudio.volume =
+    finishAudio.volume === MIN_VOLUME_LEVEL
+      ? MAX_VOLUME_LEVEL
+      : MIN_VOLUME_LEVEL;
+  hitAudio.volume =
+    hitAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
+  starAudio.volume =
+    starAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
 };
 
 // Game functions
 
 const initGame = () => {
   gameState.isStarted = true;
-  document.addEventListener('keydown', handlePauseKeyDown);
-  togglePauseButton.addEventListener('click', handleTogglePauseButtonClick);
+  document.addEventListener("keydown", handlePauseKeyDown);
+  togglePauseButton.addEventListener("click", handleTogglePauseButtonClick);
 
   backgroundAudio.loop = true;
   backgroundAudio.play();
 
+  createPlaneData();
   createTimerData();
   createScoreCounterData();
   createFuelCounterData();
@@ -812,10 +969,18 @@ const initGame = () => {
 
 // Main event listeners
 
-startGameButton.addEventListener('click', handleStartGameButtonClick);
+startGameButton.addEventListener("click", handleStartGameButtonClick);
 
-increaseFontSizeButton.addEventListener('click', handleIncreaseFontSizeButtonClick);
+increaseFontSizeButton.addEventListener(
+  "click",
+  handleIncreaseFontSizeButtonClick
+);
 
-decreaseFontSizeButton.addEventListener('click', handleDecreaseFontSizeButtonClick);
+decreaseFontSizeButton.addEventListener(
+  "click",
+  handleDecreaseFontSizeButtonClick
+);
 
-toggleSoundButton.addEventListener('click', handleToggleSoundButtonClick);
+toggleSoundButton.addEventListener("click", handleToggleSoundButtonClick);
+
+playAgainButton.addEventListener("click", handlePlayAgainButtonClick);
