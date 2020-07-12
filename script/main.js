@@ -10,6 +10,8 @@ const MAX_PARACHUTES_COUNT = 3;
 const STARS_GAP = 300;
 const PARACHUTES_GAP = 400;
 const ACTIVE_CLASSNAME = 'active';
+const MIN_VOLUME_LEVEL = 0;
+const MAX_VOLUME_LEVEL = 1;
 
 const Key = {
   ARROW_UP: 'ArrowUp',
@@ -44,6 +46,7 @@ const timeCounterWrapper = statePanelElement.querySelector('.time-counter');
 const scoreCounterWrapper = statePanelElement.querySelector('.score-counter');
 const fuelCounterWrapper = statePanelElement.querySelector('.fuel-counter');
 const togglePauseButton = statePanelElement.querySelector('.pause-toggler');
+const toggleSoundButton = statePanelElement.querySelector('.sound-toggler');
 
 // Sounds
 
@@ -650,6 +653,15 @@ const handleTogglePauseButtonClick = () => {
   pauseGame();
 };
 
+const handleToggleSoundButtonClick = () => {
+  toggleSoundButton.classList.toggle(ACTIVE_CLASSNAME);
+
+  backgroundAudio.volume = backgroundAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
+  finishAudio.volume = finishAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
+  hitAudio.volume = hitAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
+  starAudio.volume = starAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
+};
+
 // Game functions
 
 const initGame = () => {
@@ -681,3 +693,5 @@ startGameButton.addEventListener('click', handleStartGameButtonClick);
 increaseFontSizeButton.addEventListener('click', handleIncreaseFontSizeButtonClick);
 
 decreaseFontSizeButton.addEventListener('click', handleDecreaseFontSizeButtonClick);
+
+toggleSoundButton.addEventListener('click', handleToggleSoundButtonClick);
