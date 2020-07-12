@@ -213,6 +213,7 @@ body {
   height: 50px;
 
   background-image: url(../images/birds.png);
+  background-position: 0 0;
 }
 
 .star {

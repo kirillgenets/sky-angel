@@ -7,8 +7,10 @@ const FUEL_DECREASE_STEP = 1;
 const INITIAL_SCORE = 0;
 const MAX_STARS_COUNT = 5;
 const MAX_PARACHUTES_COUNT = 3;
+const MAX_BIRDS_COUNT = 8;
 const STARS_GAP = 300;
 const PARACHUTES_GAP = 400;
+const BIRDS_GAP = 300;
 const ACTIVE_CLASSNAME = 'active';
 const MIN_VOLUME_LEVEL = 0;
 const MAX_VOLUME_LEVEL = 1;
@@ -104,6 +106,18 @@ const initialParachuteData = {
   template: document.querySelector('#parachute'),
   width: 50,
   height: 66,
+};
+
+const initialBirdData = {
+  position: {
+    x: 0,
+    y: 0,
+  },
+  speed: 1,
+  template: document.querySelector('#bird'),
+  width: 46,
+  height: 50,
+  xBackgroundPosition: 0,
 };
 
 // Useful variables
@@ -226,6 +240,17 @@ class FallingObjectDataModel {
   }
 }
 
+class SpriteObjectDataModel {
+  constructor({ position, speed, template, width, height, xBackgroundPosition }) {
+    this.position = position;
+    this.speed = speed;
+    this.template = template;
+    this.width = width;
+    this.height = height;
+    this.xBackgroundPosition = xBackgroundPosition;
+  }
+}
+
 // View classes
 
 class GameObjectView {
@@ -260,6 +285,29 @@ class GameObjectView {
   }
 }
 
+class SpriteGameObjectView extends GameObjectView {
+  constructor(props) {
+    super(props);
+    this._xBackgroundPosition = props.xBackgroundPosition;
+    this._width = props.width;
+  }
+
+  _animate = () => {
+    this._xBackgroundPosition += this._width;
+    this._element.style.backgroundPosition = `${this._xBackgroundPosition}px 0`;
+  };
+
+  move(position) {
+    if (!this._element) return;
+
+    this._position = position;
+
+    this._element.style.left = `${position.x}px`;
+    this._element.style.top = `${position.y}px`;
+    requestAnimationFrame(this._animate);
+  }
+}
+
 class CounterView {
   constructor(value) {
     this._element = null;
@@ -289,11 +337,13 @@ class CounterView {
 
 const gameState = new GameStateModel(initialGameState);
 const planeData = new PlaneDataModel(initialPlaneData);
+
 let timerData = {};
 let starsData = [];
 let scoreCounterData = {};
 let parachutesData = [];
 let fuelCounterData = {};
+let birdsData = [];
 
 // Game functions
 
@@ -347,6 +397,25 @@ const createParachutesData = () => {
 
     parachutesData.push({
       ...initialParachuteData,
+      position: { x, y },
+    });
+  }
+};
+
+const createBirdsData = () => {
+  const positionIterator = new ObjectPositionIterator({
+    minMainAxisPosition: 0,
+    maxMainAxisPosition: playgroundHeight - initialBirdData.height,
+    minCrossAxisPosition: playgroundWidth + initialBirdData.width,
+    mainAxisGap: BIRDS_GAP,
+    crossAxisGap: BIRDS_GAP,
+  });
+
+  for (let i = 0; i < MAX_BIRDS_COUNT; i++) {
+    const { mainAxis: y, crossAxis: x } = positionIterator.next();
+
+    birdsData.push({
+      ...initialBirdData,
       position: { x, y },
     });
   }
@@ -609,6 +678,59 @@ const renderParachutes = () => {
   parachutesData.forEach(renderParachute);
 };
 
+const renderBirds = () => {
+  const isBirdInViewport = (data) => data.position.x > 0;
+
+  const regenerateBirds = () => {
+    if (birdsData.length > 0) return;
+
+    createBirdsData();
+    renderBirds();
+  };
+
+  const removeBird = (instance, index) => {
+    instance.destroy();
+    birdsData.splice(index, 1);
+    regenerateBirds();
+  };
+
+  const moveBird = (data, instance, index) => () => {
+    if (!gameState.isStarted) return;
+
+    if (!gameState.isPaused) {
+      if (!isBirdInViewport(data)) {
+        removeBird(instance, index);
+        return;
+      }
+
+      if (areObjectsIntersected(planeData, data)) {
+        playSound(hitAudio);
+        removeBird(instance, index);
+        return;
+      }
+
+      data.position.x -= data.speed;
+      instance.move(data.position);
+    }
+
+    requestAnimationFrame(moveBird(data, instance));
+  };
+
+  const renderBird = (data, index) => {
+    const instance = new SpriteGameObjectView({
+      template: data.template,
+      position: data.position,
+      xBackgroundPosition: data.xBackgroundPosition,
+      width: data.width,
+    });
+    playgroundElement.append(instance.render());
+
+    requestAnimationFrame(moveBird(data, instance, index));
+  };
+
+  birdsData.forEach(renderBird);
+};
+
 // Pause
 
 const pauseGame = () => {
@@ -677,6 +799,7 @@ const initGame = () => {
   createFuelCounterData();
   createStarsData();
   createParachutesData();
+  createBirdsData();
 
   renderPlane();
   renderTimer();
@@ -684,6 +807,7 @@ const initGame = () => {
   renderFuelCounter();
   renderStars();
   renderParachutes();
+  renderBirds();
 };
 
 // Main event listeners
