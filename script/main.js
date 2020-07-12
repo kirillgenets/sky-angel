@@ -8,9 +8,11 @@ const INITIAL_SCORE = 0;
 const MAX_STARS_COUNT = 5;
 const MAX_PARACHUTES_COUNT = 3;
 const MAX_BIRDS_COUNT = 8;
+const MAX_CLOUDS_COUNT = 10;
 const STARS_GAP = 300;
 const PARACHUTES_GAP = 400;
 const BIRDS_GAP = 300;
+const CLOUDS_GAP = 250;
 const ACTIVE_CLASSNAME = "active";
 const MIN_VOLUME_LEVEL = 0;
 const MAX_VOLUME_LEVEL = 1;
@@ -138,6 +140,17 @@ const initialBirdData = {
   width: 46,
   height: 50,
   xBackgroundPosition: 0,
+};
+
+const initialCloudData = {
+  position: {
+    x: 0,
+    y: 0,
+  },
+  speed: 0.5,
+  template: document.querySelector("#cloud"),
+  width: 77,
+  height: 54,
 };
 
 // Useful variables
@@ -385,14 +398,15 @@ class CounterView {
 // Mutable game objects
 
 const gameState = new GameStateModel(initialGameState);
+const birdsData = [];
+const cloudsData = [];
+const parachutesData = [];
+const starsData = [];
 
 let planeData = {};
 let timerData = {};
-let starsData = [];
 let scoreCounterData = {};
-let parachutesData = [];
 let fuelCounterData = {};
-let birdsData = [];
 
 // Main event handlers
 
@@ -417,6 +431,23 @@ const handlePauseKeyDown = (evt) => {
 
 const handleTogglePauseButtonClick = () => {
   pauseGame();
+};
+
+const handleToggleSoundButtonClick = () => {
+  toggleSoundButton.classList.toggle(ACTIVE_CLASSNAME);
+
+  backgroundAudio.volume =
+    backgroundAudio.volume === MIN_VOLUME_LEVEL
+      ? MAX_VOLUME_LEVEL
+      : MIN_VOLUME_LEVEL;
+  finishAudio.volume =
+    finishAudio.volume === MIN_VOLUME_LEVEL
+      ? MAX_VOLUME_LEVEL
+      : MIN_VOLUME_LEVEL;
+  hitAudio.volume =
+    hitAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
+  starAudio.volume =
+    starAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
 };
 
 const handlePlayAgainButtonClick = () => {
@@ -564,6 +595,25 @@ const createBirdsData = () => {
   }
 };
 
+const createCloudsData = () => {
+  const positionIterator = new ObjectPositionIterator({
+    minMainAxisPosition: 0,
+    maxMainAxisPosition: playgroundHeight - initialBirdData.height,
+    minCrossAxisPosition: playgroundWidth + initialBirdData.width,
+    mainAxisGap: CLOUDS_GAP,
+    crossAxisGap: CLOUDS_GAP,
+  });
+
+  for (let i = 0; i < MAX_BIRDS_COUNT; i++) {
+    const { mainAxis: y, crossAxis: x } = positionIterator.next();
+
+    cloudsData.push({
+      ...initialCloudData,
+      position: { x, y },
+    });
+  }
+};
+
 // Rendering
 
 const renderTimer = () => {
@@ -581,11 +631,7 @@ const renderTimer = () => {
 
     if (!gameState.isPaused) {
       const timeFromStart = (Date.now() - timerData.startTime) / 1000;
-      const minutes = Math.round(timeFromStart / 60);
-      const seconds = Math.round(timeFromStart % 60);
-      timerData.currentValue = `${minutes > 9 ? minutes : `0${minutes}`}:${
-        seconds > 9 ? seconds : `0${seconds}`
-      }`;
+      timerData.currentValue = Math.round(timeFromStart % 60);
 
       timerInstance.update(timerData.currentValue);
     }
@@ -923,21 +969,54 @@ const renderBirds = () => {
   birdsData.forEach(renderBird);
 };
 
-const handleToggleSoundButtonClick = () => {
-  toggleSoundButton.classList.toggle(ACTIVE_CLASSNAME);
+const renderClouds = () => {
+  const isCloudInViewport = (data) => data.position.x + data.width > 0;
 
-  backgroundAudio.volume =
-    backgroundAudio.volume === MIN_VOLUME_LEVEL
-      ? MAX_VOLUME_LEVEL
-      : MIN_VOLUME_LEVEL;
-  finishAudio.volume =
-    finishAudio.volume === MIN_VOLUME_LEVEL
-      ? MAX_VOLUME_LEVEL
-      : MIN_VOLUME_LEVEL;
-  hitAudio.volume =
-    hitAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
-  starAudio.volume =
-    starAudio.volume === MIN_VOLUME_LEVEL ? MAX_VOLUME_LEVEL : MIN_VOLUME_LEVEL;
+  const regenerateClouds = () => {
+    if (cloudsData.length > 0) return;
+
+    createCloudsData();
+    renderClouds();
+  };
+
+  const removeCloud = (instance, index) => {
+    instance.destroy();
+    cloudsData.splice(index, 1);
+    regenerateClouds();
+  };
+
+  const moveCloud = (data, instance, index) => () => {
+    if (gameState.isOver) {
+      removeCloud(instance, index);
+      return;
+    }
+
+    if (!gameState.isStarted) return;
+
+    if (!gameState.isPaused) {
+      if (!isCloudInViewport(data)) {
+        removeCloud(instance, index);
+        return;
+      }
+
+      data.position.x -= data.speed;
+      instance.move(data.position);
+    }
+
+    requestAnimationFrame(moveCloud(data, instance));
+  };
+
+  const renderCloud = (data, index) => {
+    const instance = new GameObjectView({
+      template: data.template,
+      position: data.position,
+    });
+    playgroundElement.append(instance.render());
+
+    requestAnimationFrame(moveCloud(data, instance, index));
+  };
+
+  cloudsData.forEach(renderCloud);
 };
 
 // Game functions
@@ -957,6 +1036,7 @@ const initGame = () => {
   createStarsData();
   createParachutesData();
   createBirdsData();
+  createCloudsData();
 
   renderPlane();
   renderTimer();
@@ -965,6 +1045,7 @@ const initGame = () => {
   renderStars();
   renderParachutes();
   renderBirds();
+  renderClouds();
 };
 
 // Main event listeners
