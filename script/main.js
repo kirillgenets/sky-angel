@@ -11,7 +11,7 @@ const STARS_GAP = 300;
 const PARACHUTES_GAP = 400;
 const ACTIVE_CLASSNAME = 'active';
 
-const Keys = {
+const Key = {
   ARROW_UP: 'ArrowUp',
   ARROW_DOWN: 'ArrowDown',
   ARROW_LEFT: 'ArrowLeft',
@@ -21,6 +21,13 @@ const Keys = {
   KEY_A: 'KeyA',
   KEY_D: 'KeyD',
   SPACE: 'Space',
+};
+
+const SoundPath = {
+  BACKGROUND: './sound/background.mp3',
+  FINISH: './sound/finish.mp3',
+  HIT: './sound/hit.mp3',
+  STAR: './sound/star.mp3',
 };
 
 // DOM-elements
@@ -37,6 +44,13 @@ const timeCounterWrapper = statePanelElement.querySelector('.time-counter');
 const scoreCounterWrapper = statePanelElement.querySelector('.score-counter');
 const fuelCounterWrapper = statePanelElement.querySelector('.fuel-counter');
 const togglePauseButton = statePanelElement.querySelector('.pause-toggler');
+
+// Sounds
+
+const backgroundAudio = new Audio(SoundPath.BACKGROUND);
+const finishAudio = new Audio(SoundPath.FINISH);
+const hitAudio = new Audio(SoundPath.HIT);
+const starAudio = new Audio(SoundPath.STAR);
 
 // Initial values
 
@@ -96,9 +110,7 @@ const playgroundHeight = playgroundElement.clientHeight;
 
 // Utilities
 
-const createElementFromTemplate = (template) => {
-  return template.content.cloneNode(true).querySelector('*');
-};
+const createElementFromTemplate = (template) => template.content.cloneNode(true).querySelector('*');
 
 const hideElement = (element) => {
   element.classList.add('hidden');
@@ -113,6 +125,11 @@ const areObjectsIntersected = (firstObjData, secondObjData) =>
   firstObjData.position.x + firstObjData.width >= secondObjData.position.x &&
   firstObjData.position.y <= secondObjData.position.y + secondObjData.height &&
   firstObjData.position.y + firstObjData.height >= secondObjData.position.y;
+
+const playSound = (sound) => {
+  sound.currentTime = 0;
+  sound.play();
+};
 
 // Utility classes
 
@@ -398,37 +415,37 @@ const renderPlane = () => {
   };
 
   const handleKeyDown = (evt) => {
-    if (evt.code === Keys.KEY_W || evt.code === Keys.ARROW_UP) {
+    if (evt.code === Key.KEY_W || evt.code === Key.ARROW_UP) {
       changePlaneDirection({ top: true });
     }
 
-    if (evt.code === Keys.KEY_S || evt.code === Keys.ARROW_DOWN) {
+    if (evt.code === Key.KEY_S || evt.code === Key.ARROW_DOWN) {
       changePlaneDirection({ bottom: true });
     }
 
-    if (evt.code === Keys.KEY_A || evt.code === Keys.ARROW_LEFT) {
+    if (evt.code === Key.KEY_A || evt.code === Key.ARROW_LEFT) {
       changePlaneDirection({ left: true });
     }
 
-    if (evt.code === Keys.KEY_D || evt.code === Keys.ARROW_RIGHT) {
+    if (evt.code === Key.KEY_D || evt.code === Key.ARROW_RIGHT) {
       changePlaneDirection({ right: true });
     }
   };
 
   const handleKeyUp = (evt) => {
-    if (evt.code === Keys.KEY_W || evt.code === Keys.ARROW_UP) {
+    if (evt.code === Key.KEY_W || evt.code === Key.ARROW_UP) {
       changePlaneDirection({ top: false });
     }
 
-    if (evt.code === Keys.KEY_S || evt.code === Keys.ARROW_DOWN) {
+    if (evt.code === Key.KEY_S || evt.code === Key.ARROW_DOWN) {
       changePlaneDirection({ bottom: false });
     }
 
-    if (evt.code === Keys.KEY_A || evt.code === Keys.ARROW_LEFT) {
+    if (evt.code === Key.KEY_A || evt.code === Key.ARROW_LEFT) {
       changePlaneDirection({ left: false });
     }
 
-    if (evt.code === Keys.KEY_D || evt.code === Keys.ARROW_RIGHT) {
+    if (evt.code === Key.KEY_D || evt.code === Key.ARROW_RIGHT) {
       changePlaneDirection({ right: false });
     }
   };
@@ -511,6 +528,7 @@ const renderStars = () => {
       }
 
       if (areObjectsIntersected(planeData, data)) {
+        playSound(starAudio);
         removeStar(instance, index);
         scoreCounterData.value++;
         return;
@@ -562,6 +580,7 @@ const renderParachutes = () => {
       }
 
       if (areObjectsIntersected(planeData, data)) {
+        playSound(starAudio);
         removeParachute(instance, index);
         fuelCounterData.value += FUEL_INCREASE_STEP;
         return;
@@ -587,8 +606,16 @@ const renderParachutes = () => {
   parachutesData.forEach(renderParachute);
 };
 
+// Pause
+
 const pauseGame = () => {
   gameState.isPaused = !gameState.isPaused;
+
+  if (backgroundAudio.paused) {
+    backgroundAudio.play();
+  } else {
+    backgroundAudio.pause();
+  }
 
   timerData.startTime = timerData.pauseTime
     ? timerData.startTime + (Date.now() - timerData.pauseTime)
@@ -614,7 +641,7 @@ const handleDecreaseFontSizeButtonClick = () => {
 };
 
 const handlePauseKeyDown = (evt) => {
-  if (evt.code === Keys.SPACE) {
+  if (evt.code === Key.SPACE) {
     pauseGame();
   }
 };
@@ -629,6 +656,9 @@ const initGame = () => {
   gameState.isStarted = true;
   document.addEventListener('keydown', handlePauseKeyDown);
   togglePauseButton.addEventListener('click', handleTogglePauseButtonClick);
+
+  backgroundAudio.loop = true;
+  backgroundAudio.play();
 
   createTimerData();
   createScoreCounterData();
