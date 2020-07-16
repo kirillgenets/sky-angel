@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,7 +8,9 @@
   </head>
   <body>
     <main>
+      <!-- Контейнер игры -->
       <div class="game">
+        <!-- Модальное окно начала игры -->
         <div class="start-modal modal">
           <button class="start-game button">
             Начать игру
@@ -31,6 +33,7 @@
             Удачи!
           </p>
         </div>
+        <!-- Модальное окно результатов -->
         <div class="results-modal modal hidden">
           <p class="game-over-text">Игра окончена</p>
           <p class="prev-result-stars hidden">
@@ -47,6 +50,7 @@
             Начать заново!
           </button>
         </div>
+        <!-- Верхняя панель с настройками игры и информацией о показателях игры -->
         <div class="state-panel">
           <img class="logo" src="images/logo.png" alt="Логотип" />
           <div class="counters">
@@ -61,39 +65,45 @@
             </div>
           </div>
           <div class="buttons">
-            <button class="toggler pause-toggler" role="button">
+            <button class="toggler pause-toggler">
               <span class="visually-hidden"
                 >Поставить на паузу / возобновить</span
               >
             </button>
-            <button class="toggler sound-toggler" role="button">
+            <button class="toggler sound-toggler">
               <span class="visually-hidden"
                 >Включить / выключить звуки игры</span
               >
             </button>
             <div class="fontsize-controls">
-              <button class="fontsize-up button" role="button">Шрифт +</button>
-              <button class="fontsize-down button" role="button">
+              <button class="fontsize-up button">Шрифт +</button>
+              <button class="fontsize-down button">
                 Шрифт -
               </button>
             </div>
           </div>
         </div>
+        <!-- Игровое поле -->
         <div class="playground"></div>
       </div>
     </main>
+    <!-- Шаблон самолета -->
     <template id="plane">
       <img class="object plane" src="images/airplane.png" alt="Самолет" />
     </template>
+    <!-- Шаблон облака -->
     <template id="cloud">
       <img class="object cloud" src="images/cloud.png" alt="Облако" />
     </template>
+    <!-- Шаблон птицы -->
     <template id="bird">
       <div class="object bird"><span class="visually-hidden">Птица</span></div>
     </template>
+    <!-- Шаблон звезды -->
     <template id="star">
       <img class="object star" src="images/star.png" alt="Звезда" />
     </template>
+    <!-- Шаблон парашюта -->
     <template id="parachute">
       <img class="object parachute" src="images/parachute.png" alt="Парашют" />
     </template>

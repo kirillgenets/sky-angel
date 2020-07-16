@@ -16,6 +16,8 @@ const CLOUDS_GAP = 250;
 const ACTIVE_CLASSNAME = "active";
 const MIN_VOLUME_LEVEL = 0;
 const MAX_VOLUME_LEVEL = 1;
+const MIN_FONT_SIZE = 12;
+const MAX_FONT_SIZE = 17;
 
 const Key = {
   ARROW_UP: "ArrowUp",
@@ -161,7 +163,7 @@ const playgroundHeight = playgroundElement.clientHeight;
 // Utilities
 
 const createElementFromTemplate = (template) =>
-  template.content.cloneNode(true).querySelector("*");
+  template.content.querySelector("*").cloneNode(true);
 
 const hideElement = (element) => {
   element.classList.add("hidden");
@@ -416,11 +418,19 @@ const handleStartGameButtonClick = () => {
 };
 
 const handleIncreaseFontSizeButtonClick = () => {
-  body.style.fontSize = `${++gameState.fontSize}px`;
+  body.style.fontSize = `${
+    gameState.fontSize < MAX_FONT_SIZE
+      ? ++gameState.fontSize
+      : gameState.fontSize
+  }px`;
 };
 
 const handleDecreaseFontSizeButtonClick = () => {
-  body.style.fontSize = `${--gameState.fontSize}px`;
+  body.style.fontSize = `${
+    gameState.fontSize > MIN_FONT_SIZE
+      ? --gameState.fontSize
+      : gameState.fontSize
+  }px`;
 };
 
 const handlePauseKeyDown = (evt) => {
@@ -631,7 +641,11 @@ const renderTimer = () => {
 
     if (!gameState.isPaused) {
       const timeFromStart = (Date.now() - timerData.startTime) / 1000;
-      timerData.currentValue = Math.round(timeFromStart % 60);
+      const minutes = Math.round(timeFromStart / 60);
+      const seconds = Math.round(timeFromStart % 60);
+      timerData.currentValue = `${minutes > 9 ? minutes : `0${minutes}`}:${
+        seconds > 9 ? seconds : `0${seconds}`
+      }`;
 
       timerInstance.update(timerData.currentValue);
     }

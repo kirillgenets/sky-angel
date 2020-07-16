@@ -151,19 +151,19 @@ body {
 }
 
 .sound-toggler {
-  background-image: url(../images/sound-off.png);
+  background-image: url("../images/sound-off.png");
 }
 
 .sound-toggler.active {
-  background-image: url(../images/sound-on.png);
+  background-image: url("../images/sound-on.png");
 }
 
 .pause-toggler {
-  background-image: url(../images/pause.png);
+  background-image: url("../images/pause.png");
 }
 
 .pause-toggler.active {
-  background-image: url(../images/play.png);
+  background-image: url("../images/play.png");
 }
 
 .fontsize-controls {
@@ -215,7 +215,7 @@ body {
   width: 46px;
   height: 50px;
 
-  background-image: url(../images/birds.png);
+  background-image: url("../images/birds.png");
   background-position: 0 0;
 }
 
